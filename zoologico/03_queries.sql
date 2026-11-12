@@ -65,61 +65,112 @@ GO
 	
 
 
--- 12. Muestra los países de Asia y Europa usando una subconsulta con IN.
+-- 12. Mostrar los países de Asia y Europa usando una subconsulta con IN.
+	SELECT nombre
+	FROM paises
+	WHERE idContinente IN (	SELECT id FROM continentes WHERE nombre IN ('Asia', 'Europa') )
 
 
 
--- 13. Cuenta cuántos animales tiene cada zoológico,
+-- 13. Contar cuántos animales tiene cada zoológico,
 --     incluyendo los que tienen cero.
+	SELECT z.nombre, COUNT(idZoologico) as totalAnimales
+	FROM zoologicos z
+	LEFT JOIN animales a ON a.idZoologico = z.id
+	GROUP BY z.nombre
 
 
--- 14. Muestra solo los zoológicos que tengan más de un animal (HAVING).
+-- 14. Mostrar solo los zoológicos que tengan más de un animal (HAVING).
+	SELECT z.nombre, COUNT(*) as totalAnimales
+	FROM animales a
+	INNER JOIN zoologicos z ON a.idZoologico = z.id
+	GROUP BY z.nombre
+	HAVING COUNT(*) > 1
 
 
--- 15. Muestra los animales que pertenecen a especies en peligro de extinción.
+-- 15. Mostrar los animales que pertenecen a especies en peligro de extinción.
+	SElECT a.nombre, e.nombreCientifico, ec.nombre as estatus, ec.enPeligro
+	FROM animales a
+	INNER JOIN especies e ON a.idEspecie = e.id
+	INNER JOIN estatusConservacion ec ON e.idEstatusConservacion = ec.id
+	WHERE ec.enPeligro = 'S'
 
 
--- 16. Muestra el presupuesto promedio de los zoológicos por continente.
+-- 16. Mostrar el presupuesto promedio de los zoológicos por continente.
+	SELECT co.nombre as continente, AVG(z.presupuestoAnual) as promedioContinente
+	FROM zoologicos z
+	INNER JOIN ciudades c ON z.idCiudad = c.id
+	INNER JOIN paises p ON c.idPais = p.id
+	INNER JOIN continentes co ON p.idContinente = co.id
+	GROUP BY co.nombre
 
 
--- 17. Muestra los animales cuyo país de origen es distinto
+
+
+-- 17. Mostrar los animales cuyo país de origen es distinto
 --     al país donde está su zoológico.
 
+	SELECT a.nombre as animal, po.nombre as paisOrigen, pz.nombre as paisZoologico
+	FROM animales a
+	INNER JOIN paises po ON a.idPais = po.id
+	INNER JOIN zoologicos z ON a.idZoologico = z.id
+	INNER JOIN ciudades c ON z.idCiudad = c.id
+	INNER JOIN paises pz ON c.idPais = pz.id
+	WHERE po.nombre != pz.nombre;
 
--- 18. Muestra los zoológicos que no tienen ningún animal registrado.
 
+
+
+
+-- 18. Mostrar los zoológicos que no tienen ningún animal registrado.
+	SELECT z.nombre
+	FROM zoologicos z
+	LEFT JOIN animales a ON a.idZoologico = z.id
+	WHERE a.id IS NULL
 
 
 /* ----------------------- AVANZADO (19-23) ----------------------- */
 
--- 19. Muestra los zoológicos con presupuesto mayor al promedio general (subconsulta).
+-- 19. Mostar los zoológicos con presupuesto mayor al promedio general (subconsulta).
+	SELECT z.nombre, z.presupuestoAnual
+	FROM zoologicos z
+	WHERE presupuestoAnual > (SELECT AVG(presupuestoAnual) FROM zoologicos)
 
-
--- 20. Calcula el presupuesto por m² de cada zoológico
+-- 20. Calcular el presupuesto por m² de cada zoológico
 --     y ordénalos de mayor a menor.
+	SELECT z.nombre, CAST(z.presupuestoAnual / aream2 AS DECIMAL (10,2)) as presupuestoPorM2
+	FROM zoologicos z
+	ORDER BY presupuestoPorM2 DESC;
 
-
--- 21. Clasifica a los animales por etapa de vida con CASE:
+-- 21. Clasificar a los animales por etapa de vida con CASE:
 --     cría (menos de 5 años), adulto (5 a 11) y senior (12 o más).
 
+	SELECT nombre, anoDeNacimiento, (YEAR(GETDATE()) - anoDeNacimiento) as edad,
+		CASE 
+			WHEN YEAR(GETDATE()) - anoDeNacimiento < 5 THEN 'cria'
+			WHEN YEAR(GETDATE()) - anoDeNacimiento < 12 THEN 'adulto'
+			ELSE 'senior'
+		END AS etapaVida
+	FROM animales;
 
--- 22. Muestra por continente cuántos países, ciudades y zoológicos hay
+
+
+-- 22. Mostrar por continente cuántos países, ciudades y zoológicos hay
 --     (cuidado con COUNT(DISTINCT ...)).
 
-
--- 23. Muestra cuál es el animal más viejo de cada zoológico
+-- 23. Mostrar cuál es el animal más viejo de cada zoológico
 --     (subconsulta correlacionada).
 
 
 
 /* ------------------------- TOP (24-25) ------------------------- */
 
--- 24. Crea una vista vw_resumenAnimales que una animales, especie, familia,
+-- 24. Crear una vista vw_resumenAnimales que una animales, especie, familia,
 --     estatus, zoológico, ciudad y país de origen, con la edad calculada.
 --     Luego haz un SELECT sobre ella filtrando solo los animales en peligro.
 
 
--- 25. Crea un procedimiento almacenado sp_animalesPorContinente que reciba
+-- 25. Crear un procedimiento almacenado sp_animalesPorContinente que reciba
 --     el nombre de un continente y devuelva los animales cuyo zoológico esté
 --     en ese continente, con su especie y su edad.
 --     Ejecútalo con 'Europa'.
