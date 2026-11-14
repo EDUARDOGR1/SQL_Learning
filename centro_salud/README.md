@@ -17,7 +17,7 @@ Se necesita guardar información sobre:
 
 ## Diagrama entidad-relación
 
-[Ver diagrama ER (PDF)](./Centro_de_salud_Diagrama_ER.pdf)
+[Ver diagrama ER (PDF)](./Centro%20de%20salud%20Diagrama%20ER.pdf)
 
 ## Estructura de la base de datos
 
