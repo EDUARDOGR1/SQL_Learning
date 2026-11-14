@@ -90,7 +90,7 @@ Ejecuta los scripts en este orden:
 
 ## Temas que practica
 
-`PRIMARY KEY` · `IDENTITY` · `FOREIGN KEY` · `UNIQUE` · `CHECK` · `JOIN` · `GROUP BY` · `HAVING` · subconsultas · `CASE` · `CAST` · funciones de fecha · vistas · procedimientos almacenados
+`JOIN` · `GROUP BY` · `HAVING` · subconsultas · `CASE` · `CAST` · funciones de fecha · vistas · procedimientos almacenados
 
 ## Estado
 
