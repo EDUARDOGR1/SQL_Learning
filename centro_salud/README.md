@@ -27,7 +27,7 @@ La base cuenta con **30 tablas** agrupadas así:
 |--------|--------|
 | **Ubicación** | `Estados`, `Municipios`, `Asentamientos`, `Colonias`, `Calles`, `Direcciones` |
 | **Personas** | `Personas` |
-| **Médicos** | `Medicos`, `Especialidades`, `Medico_Especialidad`, `Horarios_De_Consultas` |
+| **Médicos** | `Medicos`, `Especialidades`, `Medico_Especialidad`, `Horarios_De_Consultas`, `Cedula_Profesional`|
 | **Contratos y movimientos** | `Contratos`, `Tipos_De_Contrato`, `Periodos_Altas_Bajas`, `Movimientos` |
 | **Consultorios** | `Consultorios`, `Estatus_Consultorios` |
 | **Empleados** | `Empleados`, `Tipos_De_Empleados`, `Profesiones` |
