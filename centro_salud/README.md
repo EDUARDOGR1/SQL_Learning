@@ -17,9 +17,7 @@ Se necesita guardar información sobre:
 
 ## Diagrama entidad-relación
 
-![Diagrama ER](./diagrama_er.png)
-
-> Agrega aquí la imagen exportada de tu diagrama con el nombre `diagrama_er.png`.
+[Ver diagrama ER (PDF)](./Centro%20de%20salud.pdf)
 
 ## Estructura de la base de datos
 
@@ -63,10 +61,9 @@ La base cuenta con **27 tablas** agrupadas así:
 
 Ejecuta los scripts en este orden:
 
-1. `01_crear_tablas.sql`: crea la base de datos, tablas, llaves y restricciones.
-2. `02_datos_prueba.sql`: llena los catálogos y carga datos de ejemplo.
-3. `03_triggers.sql`: crea los triggers de las reglas de negocio.
-4. `04_consultas.sql`: consultas de práctica.
+1. `01_schema.sql`: crea la base de datos, tablas, llaves y restricciones.
+2. `02_data.sql`: llena los catálogos y carga datos de ejemplo.
+3. `03_queries.sql`: consultas de práctica.
 
 ## Consultas de práctica
 
@@ -81,9 +78,6 @@ Ejemplos de lo que se puede consultar con esta base:
 - Consultorios disponibles en un día y hora determinados.
 - Pacientes sin ninguna visita registrada.
 
-## Temas que practica
-
-`PRIMARY KEY` · `FOREIGN KEY` · `UNIQUE` · `CHECK` · normalización (3FN) · relaciones 1:N y N:M · `JOIN` · `GROUP BY` · subconsultas · triggers
 
 ## Estado
 
