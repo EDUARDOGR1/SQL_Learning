@@ -162,6 +162,7 @@ CREATE UNIQUE INDEX UQ_empleados_cedula
     WHERE cedulaProfesional IS NOT NULL;
 GO
 
+
 CREATE TABLE estatusVacaciones (
     id      INT IDENTITY(1,1) PRIMARY KEY,
     nombre  VARCHAR(150) NOT NULL UNIQUE
