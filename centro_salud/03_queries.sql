@@ -12,7 +12,10 @@ GO
 
 	SELECT * FROM medicos
 
-	SELECT  nombre, apellidoPaterno, apellidoMaterno, m.cedulaProfesional
+	SELECT  p.nombre AS nombreMedico, 
+			p.apellidoPaterno AS apellidoPaternoMedico, 
+			p.apellidoMaterno AS apellidoMaternoMedico, 
+			m.cedulaProfesional AS cedulaProfesionalMedico
 	FROM personas p
 	INNER JOIN medicos m ON p.id = m.idPersona
 	
@@ -22,7 +25,10 @@ GO
 -- Mostrar el número, piso y descripción de los consultorios
 -- cuyo estatus sea "Disponible".
 
-	SELECT c.numero, c.piso, c.descripcion, ec.nombre
+	SELECT	c.numero AS numeroConsultorio, 
+			c.piso AS pisoConsultorio,
+			c.descripcion as descripcion,
+			ec.nombre as estatus
 	FROM consultorios c
 	INNER JOIN estatusConsultorios ec ON c.idEstatusConsultorio = ec.id
 	WHERE ec.nombre = 'Disponible';
@@ -31,10 +37,13 @@ GO
 -- Obtener todos los pacientes cuyo NSS comience con
 -- los números 720260.
 
-	SELECT  Nombre, apellidoPaterno, apellidoMaterno, NSS
-	FROM pacientes p
-	INNER JOIN personas pe ON p.idPersona = pe.id
-	WHERE p.NSS LIKE '720260%'
+	SELECT  pe.nombre AS nombrePaciente,
+			pe.apellidoPaterno AS apellidoPaternoPaciente, 
+			pe.apellidoMaterno AS apellidoMaternoPaciente, 
+			pa.NSS
+	FROM pacientes pa
+	INNER JOIN personas pe ON pa.idPersona = pe.id
+	WHERE pa.NSS LIKE '720260%'
 
 -- 4. ESPECIALIDADES MÉDICAS
 -- Mostrar todas las especialidades registradas,
@@ -50,7 +59,13 @@ GO
 -- Obtener todas las citas programadas durante noviembre
 -- de 2026, mostrando fecha, hora, paciente y consultorio.
 
-	SELECT cp.fecha, cp.hora, pe.nombre, pe.apellidoPaterno, pe.apellidoMaterno, c.numero, c.piso, c.descripcion
+	SELECT	cp.fecha, 
+			cp.hora, pe.nombre AS nombrePaciente, 
+			pe.apellidoPaterno AS apellidoPaternoPaciente, 
+			pe.apellidoMaterno AS apellidoMaternoPaciente, 
+			c.numero, 
+			c.piso, 
+			c.descripcion
 	FROM citasProgramadas cp
 	INNER JOIN pacientes pa ON cp.idPaciente = pa.id
 	INNER JOIN personas pe ON pa.idPersona = pe.id
@@ -65,7 +80,11 @@ GO
 -- Mostrar el nombre completo de cada médico,
 -- su cédula profesional y su especialidad.
 
-	SELECT p.nombre, p.apellidoPaterno, p.apellidoMaterno, m.cedulaProfesional, e.nombre
+	SELECT	p.nombre AS nombreMedico, 
+			p.apellidoPaterno AS apellidoPaternoMedico, 
+			p.apellidoMaterno AS apellidoMaternoMedico, 
+			m.cedulaProfesional AS cedulaProfesionalMedico, 
+			e.nombre AS especialidad
 	FROM medicos m
 	INNER JOIN personas p ON m.idPersona = p.id
 	INNER JOIN medico_especialidad me ON m.id = me.idMedico
@@ -187,41 +206,12 @@ INNER JOIN consultorios co ON cp.idConsultorio = co.id
 -- por médicos que cuentan con dicha especialidad.
 -- Ordenar de mayor a menor.
 
-	SELECT e.nombre, COUNT (c.idMedico) as citasAtendidasPorMedicos
-	FROM citas c
-	INNER JOIN medicos m ON c.idMedico = m.id
-	INNER JOIN medico_especialidad me ON me.idMedico = m.id
-	RIGHT JOIN especialidades e ON me.idEspecialidad = e.id
-	GROUP BY e.nombre
-	ORDER BY citasAtendidasPorMedicos DESC;
-
-	SELECT e.nombre, COUNT(c.idMedico) as citasAtendidasPorMedicos
-	FROM medicos m
-	INNER JOIN medico_especialidad me ON me.idMedico = m.id
-	INNER JOIN especialidades e ON me.idEspecialidad = e.id
-	LEFT JOIN citas c ON c.idMedico = m.id
-	GROUP BY e.nombre
-	ORDER BY citasAtendidasPorMedicos DESC
-
--- 14. ESPECIALIDADES MÁS SOLICITADAS
--- Mostrar cada especialidad y la cantidad de citas atendidas
--- por médicos que cuentan con dicha especialidad.
--- Ordenar de mayor a menor.
-
-	SELECT e.nombre, COUNT(c.id) as citasAtendidasPorMedicos
+	SELECT e.nombre, COUNT(c.id) as cantidadCitasAtendidas
 	FROM especialidades e
-	LEFT JOIN medico_especialidad me ON me.idEspecialidad = e.id
+	LEFT JOIN medico_especialidad me ON e.id = me.idEspecialidad
 	LEFT JOIN citas c ON c.idMedico = me.idMedico
-	GROUP BY e.id, e.nombre
-	ORDER BY citasAtendidasPorMedicos DESC
-
-
-
-
-
-
-
-	SELECT * FROM citas
+	GROUP BY e.nombre
+	ORDER BY cantidadCitasAtendidas DESC
 
 
 
@@ -229,6 +219,19 @@ INNER JOIN consultorios co ON cp.idConsultorio = co.id
 -- 15. MÉDICOS CON MÁS DE UNA ESPECIALIDAD
 -- Obtener los médicos que tengan dos o más especialidades.
 -- Mostrar nombre completo y cantidad de especialidades.
+
+	SELECT m.id AS idMedico, 
+		   p.nombre AS nombreMedico, 
+		   p.apellidoPaterno AS apellidoPaternoMedico, 
+		   p.apellidoMaterno AS apellidoMaternoMedico, 
+		   COUNT(me.idMedico) AS especialidades,
+		   STRING_AGG(e.nombre, ', ') WITHIN GROUP (ORDER BY e.nombre) as nombreEspecialidades
+	FROM medico_especialidad me
+	INNER JOIN medicos m ON me.idMedico = m.id
+	INNER JOIN personas p ON m.idPersona = p.id
+	INNER JOIN especialidades e ON me.idEspecialidad = e.id
+	GROUP BY m.id, p.nombre, p.apellidoPaterno, p.apellidoMaterno
+	HAVING COUNT(me.idMedico) >= 2
 
 
 /* =====================================================
@@ -238,30 +241,83 @@ INNER JOIN consultorios co ON cp.idConsultorio = co.id
 -- 16. MÉDICOS SIN CITAS
 -- Encontrar los médicos que no tengan ninguna
 -- cita registrada.
-
+	SELECT	m.id, p.nombre, p.apellidoPaterno, p.apellidoMaterno
+	FROM medicos m
+	INNER JOIN personas p ON m.idPersona = p.id
+	WHERE NOT EXISTS (
+		SELECT 1
+		FROM citas c
+		WHERE c.idMedico = m.id
+)
 
 -- 17. PACIENTES FRECUENTES
--- Obtener los pacientes que hayan tenido más citas
+-- Obtener los pacientes que 
+-- hayan tenido más citas
 -- que el promedio de citas por paciente.
 -- Mostrar nombre completo y cantidad de citas.
+
+--Batalle en esta consulta, si alguien lee esto espero que entienda la logica
+	WITH citasPorPaciente AS(
+	SELECT	pa.id,
+			CONCAT_WS(' ', pe.nombre, pe.apellidoPaterno, pe.apellidoMaterno) AS paciente,
+			COUNT(c.id) as cantidadCitas
+	FROM pacientes pa
+	INNER JOIN personas pe ON pa.idPersona = pe.id
+	LEFT JOIN citasProgramadas cp ON cp.idPaciente = pa.id
+	LEFT JOIN citas c ON c.idCitaProgramada = cp.id
+	GROUP BY pa.id, pe.nombre, pe.apellidoPaterno, pe.apellidoMaterno
+	)
+	SELECT paciente, cantidadCitas
+	FROM citasPorPaciente
+	WHERE cantidadCitas > (SELECT AVG(cantidadCitas * 1) FROM citasPorPaciente)
 
 
 -- 18. MÉDICOS SIN VACACIONES PLANIFICADAS
 -- Encontrar los médicos que actualmente no tengan
 -- ningún periodo vacacional con estatus "Planificado".
+	SELECT m.id, p.nombre, p.apellidoPaterno, p.apellidoMaterno
+	FROM medicos m
+	INNER JOIN personas p ON m.idPersona = p.id
+	WHERE NOT EXISTS(
+		SELECT 1
+		FROM periodosVacacionalesMedicos pv
+		INNER JOIN estatusVacaciones ev ON pv.idEstatus = ev.id
+		WHERE pv.idMedico = m.id AND ev.nombre = 'Planificado'
+	)
 
 
 -- 19. CITAS SIN DIAGNÓSTICO
 -- Obtener las citas atendidas que todavía no tengan
 -- ningún diagnóstico asociado.
 -- Mostrar paciente, médico, fecha y motivo de consulta.
-
+	SELECT cp.fecha , pe.nombre, pe.apellidoPaterno, pe.apellidoMaterno, m.id, pm.nombre, pm.apellidoPaterno, pm.apellidoMaterno,  t.nombre
+	FROM citas c
+	INNER JOIN citasProgramadas cp ON c.idCitaProgramada = cp.id
+	INNER JOIN tiposMotivos t ON c.idMotivo = t.id
+	INNER JOIN medicos m ON c.idMedico = m.id
+	INNER JOIN pacientes pa ON cp.idPaciente = pa.id
+	INNER JOIN personas pe ON pa.idPersona = pe.id
+	INNER JOIN personas pm ON m.idPersona = pm.id
+	WHERE NOT EXISTS (
+		SELECT 1
+		FROM citasDiagnosticos cd
+		WHERE cd.idCita = c.id
+	)
 
 -- 20. CONSULTORIOS MÁS UTILIZADOS
 -- Encontrar los consultorios que hayan sido utilizados
 -- en más citas que el promedio de citas por consultorio.
 -- Mostrar número de consultorio y cantidad de citas.
 
+-- cantidad de citas por consultorio
+	SELECT	numero,
+			COUNT(citasProgramadas.idConsultorio) as citasProgramadasPorConsultorio,
+			COUNT(citas.id) as citasPorConsultorio
+	FROM consultorios
+	LEFT JOIN citasProgramadas ON citasProgramadas.idConsultorio = consultorios.id
+	LEFT JOIN citas ON citasProgramadas.id = citas.id
+	GROUP BY numero
+	ORDER BY citasProgramadasPorConsultorio DESC
 
 /* =====================================================
    NIVEL 5: RETOS DE SQL
