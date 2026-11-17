@@ -308,16 +308,21 @@ INNER JOIN consultorios co ON cp.idConsultorio = co.id
 -- Encontrar los consultorios que hayan sido utilizados
 -- en más citas que el promedio de citas por consultorio.
 -- Mostrar número de consultorio y cantidad de citas.
-
 -- cantidad de citas por consultorio
-	SELECT	numero,
-			COUNT(citasProgramadas.idConsultorio) as citasProgramadasPorConsultorio,
-			COUNT(citas.id) as citasPorConsultorio
-	FROM consultorios
-	LEFT JOIN citasProgramadas ON citasProgramadas.idConsultorio = consultorios.id
-	LEFT JOIN citas ON citasProgramadas.id = citas.id
-	GROUP BY numero
-	ORDER BY citasProgramadasPorConsultorio DESC
+	WITH citasPorConsultorioC AS(
+		SELECT	co.id as idConsultorio , co.numero as numeroConsultorio, 
+			COUNT(cp.id) as citasProgramadasPorConsultorio,
+			COUNT(c.id) as citasPorConsultorio
+		FROM consultorios co
+		LEFT JOIN citasProgramadas cp ON cp.idConsultorio = co.id
+		LEFT JOIN citas c ON c.idCitaProgramada = cp.id
+		GROUP BY co.id, co.numero
+	)
+	SELECT idConsultorio, numeroConsultorio, citasPorConsultorio
+	FROM citasPorConsultorioC
+	WHERE citasPorConsultorio > (SELECT AVG(citasPorConsultorio * 1) FROM citasPorConsultorioC)
+	ORDER BY  citasPorConsultorio DESC
+
 
 /* =====================================================
    NIVEL 5: RETOS DE SQL
