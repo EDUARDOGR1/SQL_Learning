@@ -4,6 +4,12 @@ Base de datos en **SQL Server** para administrar la información de un centro de
 
 Proyecto de práctica de modelado relacional, normalización y consultas SQL.
 
+## Estado del proyecto
+
+Con esta base de datos ya están resueltas todas las consultas de práctica. Los retos de SQL que quedan son opcionales y están pensados para quien quiera hacer un ejercicio extra.
+
+Por ahora doy este proyecto por concluido y continuaré con otras bases de datos. Cuando haya subido más proyectos con sus respectivas consultas, volveré para resolver los retos pendientes.
+
 ## Planteamiento
 
 Se necesita guardar información sobre:
@@ -21,19 +27,19 @@ Se necesita guardar información sobre:
 
 ## Estructura de la base de datos
 
-La base cuenta con **30 tablas** agrupadas así:
+La base cuenta con **30 tablas** agrupadas así. Los nombres siguen la convención camelCase del script.
 
 | Módulo | Tablas |
 |--------|--------|
-| **Ubicación** | `Estados`, `Municipios`, `Asentamientos`, `Colonias`, `Calles`, `Direcciones` |
-| **Personas** | `Personas` |
-| **Médicos** | `Medicos`, `Especialidades`, `Medico_Especialidad`, `Horarios_De_Consultas`, `Cedula_Profesional`|
-| **Contratos y movimientos** | `Contratos`, `Tipos_De_Contrato`, `Periodos_Altas_Bajas`, `Movimientos` |
-| **Consultorios** | `Consultorios`, `Estatus_Consultorios` |
-| **Empleados** | `Empleados`, `Tipos_De_Empleados`, `Profesiones` |
-| **Vacaciones** | `Periodos_Vacacionales_Medicos`, `Periodos_Vacacionales_Empleados`, `Estatus_Vacaciones` |
-| **Pacientes y agenda** | `Pacientes`, `Citas_Programadas`, `Estatus_De_Las_Citas_Programadas` |
-| **Atención médica** | `Citas`, `Tipos_De_Motivos`, `Diagnosticos`, `Citas_Diagnosticos` |
+| **Ubicación** | `estados`, `municipios`, `asentamientos`, `colonias`, `calles`, `direcciones` |
+| **Personas** | `personas` |
+| **Médicos** | `medicos`, `especialidades`, `medico_especialidad`, `horariosConsultas` |
+| **Contratos y movimientos** | `contratos`, `tiposContratos`, `periodosAltasBajas`, `movimientosPeriodos` |
+| **Consultorios** | `consultorios`, `estatusConsultorios` |
+| **Empleados** | `empleados`, `tiposEmpleos`, `profesiones` |
+| **Vacaciones** | `periodosVacacionalesMedicos`, `periodosVacacionalesEmpleados`, `estatusVacaciones` |
+| **Pacientes y agenda** | `pacientes`, `citasProgramadas`, `estatusCitasProgramadas` |
+| **Atención médica** | `citas`, `tiposMotivos`, `diagnosticos`, `citasDiagnosticos` |
 
 ### Citas programadas vs. citas
 
@@ -41,34 +47,47 @@ El modelo separa lo **planeado** de lo que **realmente ocurrió**:
 
 | Tabla | Qué representa |
 |-------|----------------|
-| `Citas_Programadas` | La solicitud del paciente: paciente, consultorio, fecha, hora y estatus (programada, cancelada, etc.) |
-| `Citas` | La atención que se llevó a cabo: médico que atendió, motivo y notas, ligada a la cita programada que la originó |
+| `citasProgramadas` | La solicitud del paciente: paciente, consultorio, fecha, hora y estatus (programada, cancelada, etc.) |
+| `citas` | La atención que se llevó a cabo: médico que atendió, motivo y notas, ligada a la cita programada que la originó |
 
 ## Decisiones de diseño
 
-- **Entidad `Personas` con subtipos**: los datos comunes (nombre, apellidos, teléfono, correo y dirección) viven una sola vez en `Personas`. `Medicos`, `Empleados` y `Pacientes` usan como llave primaria el mismo `ID_Persona` (a la vez FK), y solo guardan lo propio de cada rol. Así se evita duplicar datos y una misma persona puede ser, por ejemplo, médico y paciente.
+- **Entidad `personas` con subtipos**: los datos comunes (nombre, apellidos, teléfono, correo y dirección) viven una sola vez en `personas`. `medicos`, `empleados` y `pacientes` tienen su propio `id` y un `idPersona` único (FK a `personas`), por lo que la relación es 1:1 con cada rol. Así se evita duplicar datos y una misma persona puede ser, por ejemplo, médico y paciente.
 - **Catálogos en lugar de textos repetidos**: tipos de contrato, movimientos, motivos, estatus de citas, consultorios y vacaciones se guardan en tablas aparte. Se pueden agregar valores sin modificar la estructura.
 - **El tipo de contrato vive en el contrato, no en el médico**: así un sustituto puede convertirse en interino y el historial se conserva.
-- **Historial de altas y bajas separado del contrato**: `Contratos` define el tipo, y `Periodos_Altas_Bajas` registra cada movimiento (alta o baja) con su fecha, usando el catálogo `Movimientos`. Un médico puede tener varias altas y bajas a lo largo del tiempo, y sus datos nunca se eliminan.
-- **Diagnósticos con catálogo CIE-10 y tabla intermedia**: una cita puede tener varios diagnósticos (`Citas_Diagnosticos`), y se pueden hacer reportes por enfermedad sin depender de texto libre. Las observaciones del médico van en `Notas`.
-- **Direcciones normalizadas**: Estado → Municipio → Colonia → Calle → Dirección, para evitar datos repetidos. `Asentamientos` clasifica cada colonia (colonia, fraccionamiento, barrio, etc.). La dirección se guarda en `Personas`, no en cada subtipo.
-- **Separación entre tipo de empleado y profesión**: el puesto (vigilante) es distinto de la formación (enfermero, contador).
-- **Horarios por día**: `Horarios_De_Consultas` asigna a cada médico un consultorio, día de la semana, hora de inicio y hora de fin, lo que resuelve tanto el consultorio asignado como el horario distinto cada día.
+- **Historial de altas y bajas separado del contrato**: `contratos` define el tipo, y `periodosAltasBajas` registra cada movimiento (alta o baja) con su fecha, usando el catálogo `movimientosPeriodos`. Un médico puede tener varias altas y bajas a lo largo del tiempo, y sus datos nunca se eliminan. Como `contratos` no tiene fechas, la vigencia se deduce del último movimiento del médico.
+- **Diagnósticos con catálogo CIE-10 y tabla intermedia**: una cita puede tener varios diagnósticos (`citasDiagnosticos`), y se pueden hacer reportes por enfermedad sin depender de texto libre. Las notas generales del médico van en `citas.notas` y las observaciones de cada diagnóstico en `citasDiagnosticos.observaciones`.
+- **Direcciones normalizadas**: Estado → Municipio → Colonia → Calle → Dirección, para evitar datos repetidos. `asentamientos` clasifica cada colonia (colonia, fraccionamiento, barrio, etc.). La dirección se guarda en `personas`, no en cada subtipo.
+- **Separación entre tipo de empleo y profesión**: el puesto (vigilante) es distinto de la formación (enfermero, contador).
+- **Horarios por día**: `horariosConsultas` asigna a cada médico un consultorio, día de la semana (texto, de `Lunes` a `Domingo`), hora de inicio y hora de fin, lo que resuelve tanto el consultorio asignado como el horario distinto cada día.
+- **Identificadores como texto**: teléfono, NSS y código postal se guardan como texto (`VARCHAR` o `CHAR`) para conservar ceros iniciales y no operar con ellos como números.
 
 ## Reglas de negocio
 
+### Implementadas en el esquema
+
 | Regla | Cómo se aplica |
 |-------|----------------|
-| Una cita programada genera una sola cita | `UNIQUE` en `Citas.ID_Cita_Programada` |
-| Un diagnóstico no se repite en la misma cita | `UNIQUE (ID_Cita, ID_Diagnostico)` |
-| Una persona puede tener varios roles (médico, paciente, empleado) | PK de cada subtipo es FK a `Personas`, sin restricción de exclusividad |
-| Las altas y bajas de un médico se alternan y la baja no es anterior a la alta | Trigger en `Periodos_Altas_Bajas` |
-| La hora de fin es posterior a la de inicio | `CHECK` en `Horarios_De_Consultas` |
-| El NSS no se repite | `UNIQUE` en `Pacientes` y en `Empleados` |
-| La cédula profesional es única y puede ser nula en empleados (ej. vigilantes) | `UNIQUE` filtrado (`WHERE Cedula IS NOT NULL`) |
-| Solo el médico titular con contrato vigente atiende las citas | Trigger |
-| Si el motivo es Consulta, debe haber al menos un diagnóstico | Validación al cerrar la cita |
-| No se agenda dos veces el mismo consultorio, fecha y hora (excepto citas canceladas) | Trigger en `Citas_Programadas` |
+| Una cita programada genera una sola cita | `UNIQUE` en `citas.idCitaProgramada` |
+| Un diagnóstico no se repite en la misma cita | `UNIQUE (idCita, idDiagnostico)` |
+| Una persona tiene un solo registro por rol, pero puede tener varios roles | `UNIQUE` en `idPersona` de `medicos`, `empleados` y `pacientes` |
+| Un médico no repite una especialidad | `UNIQUE (idMedico, idEspecialidad)` |
+| Un médico no repite día y hora de inicio en su horario | `UNIQUE (idMedico, diaDeLaSemana, horaInicio)` |
+| El día de la semana es válido | `CHECK` en `horariosConsultas` |
+| La hora de fin es posterior a la de inicio | `CHECK` en `horariosConsultas` |
+| La fecha de fin de vacaciones es posterior a la de inicio | `CHECK` en los dos periodos vacacionales |
+| El NSS es único y tiene solo dígitos | `UNIQUE` y `CHECK` en `pacientes` y `empleados` |
+| La cédula profesional es única; en empleados puede ser nula (ej. vigilantes) | `UNIQUE` en `medicos`; índice único filtrado (`WHERE cedulaProfesional IS NOT NULL`) en `empleados` |
+| Teléfono y código postal solo tienen dígitos | `CHECK` en `personas` y `colonias` |
+
+### Pendientes de implementar
+
+Estas reglas no las cubre el esquema y se podrían resolver con triggers o validaciones:
+
+- Las altas y bajas de un médico se alternan y la baja no es anterior a la alta.
+- Solo el médico titular con contrato vigente atiende las citas.
+- Si el motivo es Consulta, debe haber al menos un diagnóstico.
+- No se agenda dos veces el mismo consultorio, fecha y hora (excepto citas canceladas).
 
 ## Cómo ejecutar
 
@@ -80,25 +99,43 @@ Ejecuta los scripts en este orden:
 2. `02_data.sql`: llena los catálogos y carga datos de ejemplo.
 3. `03_queries.sql`: consultas de práctica.
 
+**Notas**
+
+- El esquema crea la base `CentroSalud`. Si ya existe y quieres empezar de cero, elimínala antes (`DROP DATABASE CentroSalud`).
+- Los datos de ejemplo asumen una base recién creada, porque las llaves foráneas usan los `id` generados en orden.
+- Los datos son ficticios: 21 personas (6 médicos, 6 empleados y 10 pacientes; una persona es médica y paciente a la vez), 24 citas programadas y 14 citas atendidas.
+- Dos periodos de vacaciones se calculan con la fecha de hoy (`GETDATE()`), para que la consulta de "quién está de vacaciones hoy" devuelva resultados el día que cargues los datos.
+- Los scripts incluyen acentos: ábrelos como UTF-8.
+
 ## Consultas de práctica
 
-Ejemplos de lo que se puede consultar con esta base:
+`03_queries.sql` reúne las consultas de práctica, organizadas por nivel de dificultad, cada una con su enunciado. Practican:
 
-- Médicos con contrato vigente y su especialidad.
-- Horario semanal de un médico.
-- Citas programadas para una fecha, por consultorio.
-- Historial de citas y diagnósticos de un paciente (por NSS).
-- Diagnósticos más frecuentes del último año.
-- Médicos y empleados que están de vacaciones hoy.
-- Consultorios disponibles en un día y hora determinados.
-- Pacientes sin ninguna cita atendida.
-- Historial de altas y bajas de un médico.
-- Personas que son médico y paciente a la vez.
+- `INNER JOIN` y `LEFT JOIN` sobre varias tablas.
+- Filtros con `WHERE`, `LIKE`, `BETWEEN` y ordenamientos con `ORDER BY`.
+- Agregaciones con `COUNT`, `GROUP BY` y `HAVING`.
+- Subconsultas, incluyendo `EXISTS` y `NOT EXISTS`.
+- Expresiones de tabla comunes (`WITH`) para comparar contra promedios.
+
+Algunos ejemplos de lo que se consulta:
+
+- Directorio de médicos, empleados y pacientes, con su especialidad, puesto o dirección.
+- Consultorios disponibles y citas programadas por mes.
+- Historial de citas atendidas con paciente, médico, especialidad y motivo.
+- Horario semanal de cada médico, incluyendo a quien no tiene horarios.
+- Pacientes por municipio y citas por consultorio.
+- Especialidades más solicitadas y médicos con más de una especialidad.
+- Médicos sin citas y médicos sin vacaciones planificadas.
+- Pacientes con más citas que el promedio y consultorios más utilizados.
+- Citas atendidas sin diagnóstico.
+
+Además, el archivo incluye **retos SQL opcionales** para quien quiera practicar un poco más.
 
 ## Estado
 
 - [x] Diagrama entidad-relación
-- [ ] Script de tablas
-- [ ] Datos de prueba
-- [ ] Triggers
-- [ ] Consultas de práctica
+- [x] Script de tablas
+- [x] Datos de prueba
+- [x] Consultas de práctica
+- [ ] Retos SQL (opcionales)
+- [ ] Reglas de negocio pendientes (triggers y validaciones)
