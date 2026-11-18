@@ -99,12 +99,5 @@ Estas restricciones se implementan en la base de datos, no en el diagrama:
 
 ## Pendientes
 
-- Corregir en el diagrama la ortografía de "Pertenencen" a "Pertenecen".
-- Unificar el nombre de la tabla puente (`Drogas_Medicamentos`).
 - Escribir el script SQL con tablas, claves foráneas y restricciones.
 
-## Autor
-
-- Nombre: _por completar_
-- Materia / curso: _por completar_
-- Fecha: noviembre de 2026
